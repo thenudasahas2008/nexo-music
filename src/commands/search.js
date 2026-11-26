@@ -50,7 +50,7 @@ module.exports = {
         });
 
         const menu = new StringSelectMenuBuilder()
-            .setCustomId(`kairo:search:${sessionId}`)
+            .setCustomId(`nexo:search:${sessionId}`)
             .setPlaceholder('Choose a track to play...')
             .addOptions(
                 tracks.map((t, idx) => ({

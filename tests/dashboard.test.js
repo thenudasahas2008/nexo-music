@@ -55,13 +55,13 @@ describe('dashboard UI', () => {
         };
 
         const embed = buildNowPlayingEmbed(fakePlayer, fakePlayer.queue.current, null, {
-            botName: 'Kairo',
+            botName: 'Nexo',
             twentyFourSeven: true,
             autoplay: true,
         });
         assert.equal(embed.data.title, 'Midnight City');
         assert.equal(embed.data.url, 'https://youtube.com/watch?v=test');
-        assert.ok(embed.data.author.name.includes('Kairo'));
+        assert.ok(embed.data.author.name.includes('Nexo'));
         assert.ok(embed.data.description.includes('◉'));
 
         const rows = buildDashboardComponents(fakePlayer, { autoplay: true });

@@ -6,7 +6,7 @@ const { checkVoiceAccess, hasDjAccess } = require('../utils/permissions');
 const { safeReply } = require('../utils/rest');
 
 module.exports = {
-    data: new SlashCommandBuilder().setName('leave').setDescription('Disconnect Kairo from the voice channel'),
+    data: new SlashCommandBuilder().setName('leave').setDescription('Disconnect Nexo from the voice channel'),
     async execute(interaction, client) {
         const player = client.audio.getPlayer(interaction.guildId);
         if (!player) {

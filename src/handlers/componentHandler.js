@@ -11,10 +11,10 @@ const { safeReply, safeUpdate } = require('../utils/rest');
 
 async function handleComponentInteraction(interaction, client) {
     const id = interaction.customId || '';
-    if (!id.startsWith('kairo:')) return false;
+    if (!id.startsWith('nexo:')) return false;
 
-    if (id.startsWith('kairo:search:')) {
-        const sessionId = id.slice('kairo:search:'.length);
+    if (id.startsWith('nexo:search:')) {
+        const sessionId = id.slice('nexo:search:'.length);
         await handleSearchSelection(interaction, client, sessionId);
         return true;
     }
@@ -28,8 +28,8 @@ async function handleComponentInteraction(interaction, client) {
         return true;
     }
 
-    if (id.startsWith('kairo:qpage:')) {
-        const page = Number.parseInt(id.slice('kairo:qpage:'.length), 10) || 1;
+    if (id.startsWith('nexo:qpage:')) {
+        const page = Number.parseInt(id.slice('nexo:qpage:'.length), 10) || 1;
         const pageSize = 10;
         const totalPages = Math.max(1, Math.ceil((player.queue?.tracks?.length || 0) / pageSize));
         const safePage = Math.max(1, Math.min(totalPages, page));
@@ -40,7 +40,7 @@ async function handleComponentInteraction(interaction, client) {
         return true;
     }
 
-    if (id === 'kairo:queue') {
+    if (id === 'nexo:queue') {
         const pageSize = 10;
         const totalPages = Math.max(1, Math.ceil((player.queue?.tracks?.length || 0) / pageSize));
         await safeReply(interaction, {
@@ -69,7 +69,7 @@ async function handleComponentInteraction(interaction, client) {
         return true;
     }
 
-    if (id === 'kairo:eq' && interaction.isStringSelectMenu()) {
+    if (id === 'nexo:eq' && interaction.isStringSelectMenu()) {
         const presetId = interaction.values?.[0] || 'flat';
         const preset = await applyFilterPreset(player, presetId);
         client.guildStore.set(interaction.guildId, { eqPreset: preset.id });
@@ -81,7 +81,7 @@ async function handleComponentInteraction(interaction, client) {
     }
 
     switch (id) {
-        case 'kairo:toggle': {
+        case 'nexo:toggle': {
             if (player.paused) {
                 await player.resume();
             } else {
@@ -89,7 +89,7 @@ async function handleComponentInteraction(interaction, client) {
             }
             break;
         }
-        case 'kairo:skip': {
+        case 'nexo:skip': {
             if (!player.queue?.tracks?.length && !settings.autoplay) {
                 await player.stopPlaying(true, false);
                 await client.dashboard.markStopped(interaction.guildId);
@@ -102,7 +102,7 @@ async function handleComponentInteraction(interaction, client) {
             await player.skip(0, false);
             break;
         }
-        case 'kairo:prev': {
+        case 'nexo:prev': {
             const prev = player.queue?.previous?.[0];
             if (!prev) {
                 await safeReply(interaction, {
@@ -114,7 +114,7 @@ async function handleComponentInteraction(interaction, client) {
             await player.play({ clientTrack: prev });
             break;
         }
-        case 'kairo:stop': {
+        case 'nexo:stop': {
             await client.audio.stopAndLeave(interaction.guildId, { keep247: settings.twentyFourSeven });
             await safeReply(interaction, {
                 embeds: [createStatusEmbed('info', 'Playback Stopped', 'Cleared the queue and stopped the audio stream.')],
@@ -122,29 +122,29 @@ async function handleComponentInteraction(interaction, client) {
             });
             return true;
         }
-        case 'kairo:loop': {
+        case 'nexo:loop': {
             const order = ['off', 'track', 'queue'];
             const nextMode = order[(order.indexOf(player.repeatMode || 'off') + 1) % order.length];
             await player.setRepeatMode(nextMode);
             break;
         }
-        case 'kairo:shuffle': {
+        case 'nexo:shuffle': {
             if (player.queue?.tracks?.length > 1) {
                 await player.queue.shuffle();
             }
             break;
         }
-        case 'kairo:voldown': {
+        case 'nexo:voldown': {
             const nextVol = Math.max(5, (player.volume ?? 80) - 10);
             await player.setVolume(nextVol);
             break;
         }
-        case 'kairo:volup': {
+        case 'nexo:volup': {
             const nextVol = Math.min(100, (player.volume ?? 80) + 10);
             await player.setVolume(nextVol);
             break;
         }
-        case 'kairo:autoplay': {
+        case 'nexo:autoplay': {
             const nextAutoplay = !Boolean(settings.autoplay);
             client.guildStore.set(interaction.guildId, { autoplay: nextAutoplay });
             player.set('autoplay', nextAutoplay);

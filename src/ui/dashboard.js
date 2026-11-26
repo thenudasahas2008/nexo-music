@@ -97,7 +97,7 @@ function createStatusEmbed(type, title, description, fields = []) {
 }
 
 function buildNowPlayingEmbed(player, track, client, options = {}) {
-    const botName = options.botName || 'Kairo';
+    const botName = options.botName || 'Nexo';
     const avatarUrl = client?.user?.displayAvatarURL?.() || undefined;
 
     if (!player || !track?.info) {
@@ -176,30 +176,30 @@ function buildDashboardComponents(player, options = {}) {
 
     const transportRow = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-            .setCustomId('kairo:prev')
+            .setCustomId('nexo:prev')
             .setEmoji('⏮️')
             .setStyle(ButtonStyle.Secondary)
             .setDisabled(!hasPrev),
         new ButtonBuilder()
-            .setCustomId('kairo:toggle')
+            .setCustomId('nexo:toggle')
             .setEmoji(isPaused ? '▶️' : '⏸️')
             .setStyle(isPaused ? ButtonStyle.Success : ButtonStyle.Primary),
         new ButtonBuilder()
-            .setCustomId('kairo:skip')
+            .setCustomId('nexo:skip')
             .setEmoji('⏭️')
             .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
-            .setCustomId('kairo:loop')
+            .setCustomId('nexo:loop')
             .setEmoji(repeatMode === 'track' ? '🔂' : '🔁')
             .setStyle(repeatMode === 'off' ? ButtonStyle.Secondary : ButtonStyle.Success),
         new ButtonBuilder()
-            .setCustomId('kairo:stop')
+            .setCustomId('nexo:stop')
             .setEmoji('⏹️')
             .setStyle(ButtonStyle.Danger)
     );
 
     const queueButton = new ButtonBuilder()
-        .setCustomId('kairo:queue')
+        .setCustomId('nexo:queue')
         .setEmoji('📜')
         .setStyle(ButtonStyle.Secondary);
     if (queueCount > 0) {
@@ -208,20 +208,20 @@ function buildDashboardComponents(player, options = {}) {
 
     const utilityRow = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-            .setCustomId('kairo:voldown')
+            .setCustomId('nexo:voldown')
             .setEmoji('🔉')
             .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
-            .setCustomId('kairo:volup')
+            .setCustomId('nexo:volup')
             .setEmoji('🔊')
             .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
-            .setCustomId('kairo:shuffle')
+            .setCustomId('nexo:shuffle')
             .setEmoji('🔀')
             .setStyle(ButtonStyle.Secondary)
             .setDisabled(!hasQueue),
         new ButtonBuilder()
-            .setCustomId('kairo:autoplay')
+            .setCustomId('nexo:autoplay')
             .setEmoji('✨')
             .setStyle(isAutoplay ? ButtonStyle.Success : ButtonStyle.Secondary),
         queueButton
@@ -262,7 +262,7 @@ function buildQueueEmbed(player, page = 1, pageSize = 10) {
 
     return new EmbedBuilder()
         .setColor(COLORS.PLAYING)
-        .setTitle('📜  Kairo Playback Queue')
+        .setTitle('📜  Nexo Playback Queue')
         .setDescription(lines.join('\n').slice(0, 4000))
         .setFooter({
             text: `Page ${safePage}/${totalPages}  •  ${tracks.length} queued  •  Total ${formatDuration(totalMs)}`,
@@ -273,13 +273,13 @@ function buildQueueComponents(page, totalPages) {
     return [
         new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setCustomId(`kairo:qpage:${Math.max(1, page - 1)}`)
+                .setCustomId(`nexo:qpage:${Math.max(1, page - 1)}`)
                 .setEmoji('◀️')
                 .setLabel('Previous')
                 .setStyle(ButtonStyle.Secondary)
                 .setDisabled(page <= 1),
             new ButtonBuilder()
-                .setCustomId(`kairo:qpage:${Math.min(totalPages, page + 1)}`)
+                .setCustomId(`nexo:qpage:${Math.min(totalPages, page + 1)}`)
                 .setEmoji('▶️')
                 .setLabel('Next')
                 .setStyle(ButtonStyle.Secondary)

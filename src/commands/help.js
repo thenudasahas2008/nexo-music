@@ -5,7 +5,7 @@ const { createStatusEmbed } = require('../ui/dashboard');
 const { safeReply } = require('../utils/rest');
 
 module.exports = {
-    data: new SlashCommandBuilder().setName('help').setDescription('Explore Kairo commands and audio features'),
+    data: new SlashCommandBuilder().setName('help').setDescription('Explore Nexo commands and audio features'),
     async execute(interaction, client) {
         return safeReply(interaction, {
             embeds: [

@@ -25,7 +25,7 @@ module.exports = {
             const controller = new AbortController();
             const timer = setTimeout(() => controller.abort(), 5500);
             timer.unref?.();
-            const res = await fetch(url, { signal: controller.signal, headers: { 'User-Agent': 'KairoMusic/1.1' } });
+            const res = await fetch(url, { signal: controller.signal, headers: { 'User-Agent': 'NexoMusic/1.2' } });
             clearTimeout(timer);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const text = await readResponseTextWithLimit(res, 131072);

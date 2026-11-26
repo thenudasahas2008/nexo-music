@@ -5,7 +5,7 @@ const { createStatusEmbed } = require('../ui/dashboard');
 const { safeReply } = require('../utils/rest');
 
 module.exports = {
-    data: new SlashCommandBuilder().setName('invite').setDescription('Get the invite link for Kairo Music'),
+    data: new SlashCommandBuilder().setName('invite').setDescription('Get the invite link for Nexo Music'),
     async execute(interaction, client) {
         const inviteUrl = client.generateInvite({
             scopes: [OAuth2Scopes.Bot, OAuth2Scopes.ApplicationsCommands],

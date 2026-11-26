@@ -76,7 +76,7 @@ class NodeRegistry {
         try {
             const res = await fetch(PUBLIC_NODE_LIST_URL, {
                 signal: controller.signal,
-                headers: { Accept: 'application/json', 'User-Agent': 'KairoMusic/1.1' },
+                headers: { Accept: 'application/json', 'User-Agent': 'NexoMusic/1.2' },
             });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const text = await readResponseTextWithLimit(res, MAX_FETCH_BYTES);
@@ -166,7 +166,7 @@ class NodeRegistry {
 
         const started = Date.now();
         try {
-            const headers = { Authorization: authorization, 'User-Agent': 'KairoMusic/1.1' };
+            const headers = { Authorization: authorization, 'User-Agent': 'NexoMusic/1.2' };
             const [infoRes, statsRes] = await Promise.all([
                 fetch(`${base}/v4/info`, { signal: controller.signal, headers }),
                 fetch(`${base}/v4/stats`, { signal: controller.signal, headers }).catch(() => null),

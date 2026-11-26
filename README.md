@@ -1,6 +1,6 @@
-# Kairo Music
+# Nexo Music
 
-Studio-grade, zero-drop Discord music bot built on **Discord.js v14** and **Lavalink v4** with multi-node automatic failover, active silent-stall watchdog recovery, cross-source playback fallback, and an interactive **Kairo Studio** Now Playing dashboard.
+Studio-grade, zero-drop Discord music bot built on **Discord.js v14** and **Lavalink v4** with multi-node automatic failover, active silent-stall watchdog recovery, cross-source playback fallback, and an interactive **Nexo** Now Playing dashboard.
 
 ## Highlights
 
@@ -9,7 +9,7 @@ Studio-grade, zero-drop Discord music bot built on **Discord.js v14** and **Lava
   - Automatically migrates active guild players to healthier nodes before frame starvation causes stutter or drops.
   - **Active Anti-Stall Watchdog:** Detects silent stream freezes mid-song and recovers playback at the exact timestamp on a healthy node/source.
   - Cross-source fallback (`ytmsearch` -> `scsearch` -> `dzsearch` -> `ytsearch`) when a source or node encounters blocks or timeouts.
-- **Kairo Studio Interactive Dashboard**
+- **Nexo Interactive Dashboard**
   - Live progress bar, active EQ preset indicator, node ping telemetry, Up Next preview, transport buttons, and instant EQ preset dropdown.
 - **256 MiB Container Friendly**
   - Bounded Discord gateway entity caching and sweepers, bounded Undici HTTP connection pool, and atomic JSON persistence for server settings.
