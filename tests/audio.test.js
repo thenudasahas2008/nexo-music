@@ -16,6 +16,14 @@ describe('queryGuard', () => {
         assert.equal(yt.isUrl, true);
         assert.equal(yt.source, 'youtube');
 
+        const mix = classifyQuery('https://www.youtube.com/watch?v=cwHO-VfIm_s&list=RDcwHO-VfIm_s&start_radio=1');
+        assert.equal(mix.valid, true);
+        assert.equal(mix.query, 'https://www.youtube.com/watch?v=cwHO-VfIm_s');
+
+        const realPlaylist = classifyQuery('https://www.youtube.com/watch?v=cwHO-VfIm_s&list=PL123456789');
+        assert.equal(realPlaylist.valid, true);
+        assert.ok(realPlaylist.query.includes('list=PL123456789'));
+
         const local = classifyQuery('http://localhost:2333/secret');
         assert.equal(local.valid, false);
 

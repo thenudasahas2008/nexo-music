@@ -30,7 +30,7 @@ function formatDuration(ms) {
     return hrs > 0 ? `${hrs}:${mm}:${ss}` : `${mm}:${ss}`;
 }
 
-function createProgressBar(currentMs, totalMs, isStream = false, isPaused = false, segments = 15) {
+function createProgressBar(currentMs, totalMs, isStream = false, isPaused = false, segments = 10) {
     if (isStream) {
         return `${isPaused ? '⏸' : '🔴'}  \`LIVE\`  ${'━'.repeat(segments)}`;
     }
@@ -40,7 +40,7 @@ function createProgressBar(currentMs, totalMs, isStream = false, isPaused = fals
     const pos = Math.max(0, Math.min(segments - 1, Math.round(ratio * (segments - 1))));
     const bar = `${'━'.repeat(pos)}◉${'─'.repeat(Math.max(0, segments - 1 - pos))}`;
     const icon = isPaused ? '⏸' : '▶';
-    return `${icon}  \`${formatDuration(clampedCurrent)}\`  ${bar}  \`${formatDuration(safeTotal)}\``;
+    return `${icon} \`${formatDuration(clampedCurrent)}\` ${bar} \`${formatDuration(safeTotal)}\``;
 }
 
 function getSourceAccentColor(sourceName = '') {
@@ -183,23 +183,28 @@ function buildDashboardComponents(player, options = {}) {
         new ButtonBuilder()
             .setCustomId('kairo:toggle')
             .setEmoji(isPaused ? '▶️' : '⏸️')
-            .setLabel(isPaused ? 'Resume' : 'Pause')
             .setStyle(isPaused ? ButtonStyle.Success : ButtonStyle.Primary),
         new ButtonBuilder()
             .setCustomId('kairo:skip')
             .setEmoji('⏭️')
-            .setLabel('Skip')
             .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
             .setCustomId('kairo:loop')
-            .setEmoji('🔁')
-            .setLabel(repeatMode === 'off' ? 'Loop' : repeatMode === 'track' ? 'Track' : 'Queue')
+            .setEmoji(repeatMode === 'track' ? '🔂' : '🔁')
             .setStyle(repeatMode === 'off' ? ButtonStyle.Secondary : ButtonStyle.Success),
         new ButtonBuilder()
             .setCustomId('kairo:stop')
             .setEmoji('⏹️')
             .setStyle(ButtonStyle.Danger)
     );
+
+    const queueButton = new ButtonBuilder()
+        .setCustomId('kairo:queue')
+        .setEmoji('📜')
+        .setStyle(ButtonStyle.Secondary);
+    if (queueCount > 0) {
+        queueButton.setLabel(String(queueCount));
+    }
 
     const utilityRow = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
@@ -218,13 +223,8 @@ function buildDashboardComponents(player, options = {}) {
         new ButtonBuilder()
             .setCustomId('kairo:autoplay')
             .setEmoji('✨')
-            .setLabel('Autoplay')
             .setStyle(isAutoplay ? ButtonStyle.Success : ButtonStyle.Secondary),
-        new ButtonBuilder()
-            .setCustomId('kairo:queue')
-            .setEmoji('📜')
-            .setLabel(queueCount > 0 ? `Queue (${queueCount})` : 'Queue')
-            .setStyle(ButtonStyle.Secondary)
+        queueButton
     );
 
     return [transportRow, utilityRow];

@@ -20,6 +20,23 @@ function isUrl(input) {
     return /^https?:\/\/\S+$/i.test(String(input || '').trim());
 }
 
+function normalizeMusicUrl(parsed) {
+    const host = parsed.hostname.toLowerCase();
+    const isYoutube = host.includes('youtube.com') || host.includes('youtu.be');
+    if (isYoutube) {
+        const listId = parsed.searchParams.get('list') || '';
+        const hasVideo = parsed.searchParams.has('v') || host.includes('youtu.be');
+        // Strip YouTube auto-generated Mix/Radio params (list=RD..., start_radio=1) on single video links
+        if (hasVideo && (/^RD/i.test(listId) || parsed.searchParams.get('start_radio') === '1')) {
+            parsed.searchParams.delete('list');
+            parsed.searchParams.delete('index');
+            parsed.searchParams.delete('start_radio');
+            parsed.searchParams.delete('rv');
+        }
+    }
+    return parsed.toString();
+}
+
 function classifyQuery(rawQuery, defaultPlatform = 'ytmsearch') {
     const query = sanitizeQuery(rawQuery);
     if (!query) return { valid: false, reason: 'Empty query' };
@@ -40,7 +57,7 @@ function classifyQuery(rawQuery, defaultPlatform = 'ytmsearch') {
             return {
                 valid: true,
                 isUrl: true,
-                query,
+                query: normalizeMusicUrl(parsed),
                 source: detectUrlSource(host),
             };
         } catch {
@@ -107,6 +124,7 @@ function buildFallbackQueries(track) {
 module.exports = {
     sanitizeQuery,
     isUrl,
+    normalizeMusicUrl,
     classifyQuery,
     detectUrlSource,
     buildFallbackQueries,
