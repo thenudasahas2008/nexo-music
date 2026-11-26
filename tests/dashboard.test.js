@@ -59,14 +59,15 @@ describe('dashboard UI', () => {
             twentyFourSeven: true,
             autoplay: true,
         });
-        assert.ok(embed.data.description.includes('Midnight City'));
-        assert.ok(embed.data.author.name.includes('Kairo Studio'));
+        assert.equal(embed.data.title, 'Midnight City');
+        assert.equal(embed.data.url, 'https://youtube.com/watch?v=test');
+        assert.ok(embed.data.author.name.includes('Kairo'));
+        assert.ok(embed.data.description.includes('◉'));
 
         const rows = buildDashboardComponents(fakePlayer, { autoplay: true });
-        assert.equal(rows.length, 3);
+        assert.equal(rows.length, 2);
         assert.equal(rows[0].components.length, 5);
         assert.equal(rows[1].components.length, 5);
-        assert.equal(rows[2].components.length, 1);
 
         const qEmbed = buildQueueEmbed(fakePlayer, 1, 10);
         assert.ok(qEmbed.data.description.includes('Outro'));

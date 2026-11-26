@@ -5,13 +5,13 @@ const {
     ActionRowBuilder,
     ButtonBuilder,
     ButtonStyle,
-    StringSelectMenuBuilder,
 } = require('discord.js');
-const { listPresets, getPreset } = require('../audio/filters');
+const { getPreset } = require('../audio/filters');
 
 const COLORS = Object.freeze({
-    PLAYING: 0x7c5cff,
+    PLAYING: 0x6c5ce7,
     PAUSED: 0xf59e0b,
+    LIVE: 0xf43f5e,
     SUCCESS: 0x10b981,
     INFO: 0x38bdf8,
     WARNING: 0xf59e0b,
@@ -30,17 +30,26 @@ function formatDuration(ms) {
     return hrs > 0 ? `${hrs}:${mm}:${ss}` : `${mm}:${ss}`;
 }
 
-function createProgressBar(currentMs, totalMs, isStream = false, isPaused = false, segments = 12) {
+function createProgressBar(currentMs, totalMs, isStream = false, isPaused = false, segments = 15) {
     if (isStream) {
-        return `${isPaused ? '⏸' : '🔴'}  \`LIVE STREAM\`  ${'▰'.repeat(segments)}`;
+        return `${isPaused ? '⏸' : '🔴'}  \`LIVE\`  ${'━'.repeat(segments)}`;
     }
     const safeTotal = Math.max(1000, Number(totalMs) || 1000);
     const clampedCurrent = Math.max(0, Math.min(safeTotal, Number(currentMs) || 0));
     const ratio = clampedCurrent / safeTotal;
-    const filled = Math.max(0, Math.min(segments, Math.round(ratio * segments)));
-    const bar = `${'▰'.repeat(filled)}${'▱'.repeat(Math.max(0, segments - filled))}`;
+    const pos = Math.max(0, Math.min(segments - 1, Math.round(ratio * (segments - 1))));
+    const bar = `${'━'.repeat(pos)}◉${'─'.repeat(Math.max(0, segments - 1 - pos))}`;
     const icon = isPaused ? '⏸' : '▶';
     return `${icon}  \`${formatDuration(clampedCurrent)}\`  ${bar}  \`${formatDuration(safeTotal)}\``;
+}
+
+function getSourceAccentColor(sourceName = '') {
+    const src = String(sourceName).toLowerCase();
+    if (src.includes('spotify')) return 0x1db954;
+    if (src.includes('soundcloud')) return 0xff5500;
+    if (src.includes('youtube')) return 0x6c5ce7;
+    if (src.includes('deezer')) return 0xa238ff;
+    return COLORS.PLAYING;
 }
 
 function formatSourceLabel(sourceName = '') {
@@ -51,7 +60,7 @@ function formatSourceLabel(sourceName = '') {
     if (src.includes('deezer')) return 'Deezer';
     if (src.includes('apple')) return 'Apple Music';
     if (src.includes('twitch')) return 'Twitch';
-    return 'Direct Audio';
+    return 'Audio';
 }
 
 function truncate(text, max = 64) {
@@ -76,8 +85,7 @@ function createStatusEmbed(type, title, description, fields = []) {
 
     const embed = new EmbedBuilder()
         .setColor(colorMap[type] || COLORS.INFO)
-        .setTitle(`${iconMap[type] || '◈'}  ${truncate(title, 200)}`)
-        .setTimestamp();
+        .setTitle(`${iconMap[type] || '◈'}  ${truncate(title, 200)}`);
 
     if (description) {
         embed.setDescription(String(description).slice(0, 4000));
@@ -89,14 +97,14 @@ function createStatusEmbed(type, title, description, fields = []) {
 }
 
 function buildNowPlayingEmbed(player, track, client, options = {}) {
+    const botName = options.botName || 'Kairo';
+    const avatarUrl = client?.user?.displayAvatarURL?.() || undefined;
+
     if (!player || !track?.info) {
         return new EmbedBuilder()
             .setColor(COLORS.IDLE)
-            .setAuthor({
-                name: `${options.botName || 'Kairo'} Studio  •  Session Ended`,
-                iconURL: client?.user?.displayAvatarURL?.() || undefined,
-            })
-            .setDescription('Queue finished. Use `/play` anytime to start a new listening session.');
+            .setAuthor({ name: `${botName}  •  Session Ended`, iconURL: avatarUrl })
+            .setDescription('Queue finished. Use `/play` anytime to queue more music.');
     }
 
     const info = track.info;
@@ -110,66 +118,49 @@ function buildNowPlayingEmbed(player, track, client, options = {}) {
     const preset = getPreset(player.get?.('eqPreset') || options.eqPreset || 'flat');
     const is247 = Boolean(options.twentyFourSeven);
     const isAutoplay = Boolean(options.autoplay ?? player.get?.('autoplay'));
-    const nodeLatency = Number(player.ping?.lavalink || player.node?.ping || options.nodeLatencyMs);
-    const latencyLabel = Number.isFinite(nodeLatency) && nodeLatency > 0 ? `${Math.round(nodeLatency)}ms` : 'Active';
 
-    const titleText = truncate(info.title || 'Unknown Track', 80);
-    const titleLine = info.uri ? `**[${titleText}](${info.uri})**` : `**${titleText}**`;
-    const artistText = truncate(info.author || 'Unknown Artist', 50);
+    const titleText = truncate(info.title || 'Unknown Track', 72);
+    const artistText = truncate(info.author || 'Unknown Artist', 44);
     const sourceBadge = formatSourceLabel(info.sourceName);
+    const requesterDisplay = track.requester?.id ? `<@${track.requester.id}>` : 'Autoplay';
     const progress = createProgressBar(position, duration, isStream, isPaused);
 
-    const nextTrack = player.queue?.tracks?.[0];
-    const remaining = player.queue?.tracks?.length || 0;
-    const upNextValue = nextTrack?.info
-        ? `**${truncate(nextTrack.info.title, 48)}** — ${truncate(nextTrack.info.author || 'Unknown', 28)} \`[${nextTrack.info.isStream ? 'LIVE' : formatDuration(nextTrack.info.duration)}]\`${remaining > 1 ? ` *(+${remaining - 1} more)*` : ''}`
-        : isAutoplay
-          ? '*Autoplay will queue a matching track next*'
-          : '*Queue is empty — add tracks with `/play`*';
+    const statusLabel = isPaused ? 'Paused' : isStream ? 'Live' : 'Now Playing';
+    const embedColor = isPaused ? COLORS.PAUSED : isStream ? COLORS.LIVE : getSourceAccentColor(info.sourceName);
 
-    const requesterId = track.requester?.id;
-    const requesterDisplay = requesterId ? `<@${requesterId}>` : 'Autoplay';
-
-    const statusBadge = isPaused ? 'PAUSED' : isStream ? 'LIVE STREAM' : 'NOW PLAYING';
-    const footerParts = [`${options.botName || 'Kairo'} Zero-Drop Audio`];
-    if (is247) footerParts.push('24/7 On');
-    if (isAutoplay) footerParts.push('Autoplay On');
-    if (player.node?.id) footerParts.push(`Node ${player.node.id.slice(0, 22)}`);
+    const footerParts = [`🔊 ${volume}%`, `🔁 ${loopLabel}`];
+    if (preset && preset.id !== 'flat') footerParts.push(`🎛️ ${preset.label}`);
+    if (isAutoplay) footerParts.push('✨ Autoplay');
+    if (is247) footerParts.push('♾️ 24/7');
 
     const embed = new EmbedBuilder()
-        .setColor(isPaused ? COLORS.PAUSED : isStream ? 0xf43f5e : COLORS.PLAYING)
+        .setColor(embedColor)
         .setAuthor({
-            name: `${options.botName || 'Kairo'} Studio  •  ${statusBadge}`,
-            iconURL: client?.user?.displayAvatarURL?.() || undefined,
+            name: `${botName}  •  ${statusLabel}`,
+            iconURL: avatarUrl,
         })
-        .setDescription(`${titleLine}\nby **${artistText}**  •  \`${sourceBadge}\`\n\n${progress}`)
-        .addFields(
-            {
-                name: '🎚️ Audio',
-                value: `\`${volume}%\`  •  EQ: \`${preset?.label || 'Flat'}\`\nLoop: \`${loopLabel}\``,
-                inline: true,
-            },
-            {
-                name: '⚡ Engine',
-                value: `Ping: \`${latencyLabel}\`\nMode: \`${is247 ? '24/7 Locked' : 'HD Relay'}\``,
-                inline: true,
-            },
-            {
-                name: '🎧 Requested',
-                value: requesterDisplay,
-                inline: true,
-            },
-            {
-                name: '⏭️ Up Next',
-                value: upNextValue,
-                inline: false,
-            }
-        )
-        .setFooter({ text: footerParts.join('  •  ') })
-        .setTimestamp();
+        .setTitle(titleText)
+        .setDescription(`**${artistText}**  •  ${sourceBadge}  •  ${requesterDisplay}\n\n${progress}`)
+        .setFooter({ text: footerParts.join('   •   ') });
+
+    if (info.uri && /^https?:\/\//i.test(info.uri)) {
+        embed.setURL(info.uri);
+    }
 
     if (info.artworkUrl) {
         embed.setThumbnail(info.artworkUrl);
+    }
+
+    const nextTrack = player.queue?.tracks?.[0];
+    const remaining = player.queue?.tracks?.length || 0;
+    if (nextTrack?.info) {
+        const nextDur = nextTrack.info.isStream ? 'LIVE' : formatDuration(nextTrack.info.duration);
+        const moreText = remaining > 1 ? `  *(+${remaining - 1} more)*` : '';
+        embed.addFields({
+            name: 'Up Next',
+            value: `**${truncate(nextTrack.info.title, 48)}** — ${truncate(nextTrack.info.author || 'Unknown', 26)} \`[${nextDur}]\`${moreText}`,
+            inline: false,
+        });
     }
 
     return embed;
@@ -181,7 +172,7 @@ function buildDashboardComponents(player, options = {}) {
     const isAutoplay = Boolean(options.autoplay ?? player?.get?.('autoplay'));
     const hasPrev = Boolean(player?.queue?.previous?.length);
     const hasQueue = Boolean(player?.queue?.tracks?.length);
-    const currentPreset = player?.get?.('eqPreset') || options.eqPreset || 'flat';
+    const queueCount = player?.queue?.tracks?.length || 0;
 
     const transportRow = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
@@ -200,23 +191,17 @@ function buildDashboardComponents(player, options = {}) {
             .setLabel('Skip')
             .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
-            .setCustomId('kairo:stop')
-            .setEmoji('⏹️')
-            .setStyle(ButtonStyle.Danger),
-        new ButtonBuilder()
             .setCustomId('kairo:loop')
             .setEmoji('🔁')
             .setLabel(repeatMode === 'off' ? 'Loop' : repeatMode === 'track' ? 'Track' : 'Queue')
-            .setStyle(repeatMode === 'off' ? ButtonStyle.Secondary : ButtonStyle.Success)
+            .setStyle(repeatMode === 'off' ? ButtonStyle.Secondary : ButtonStyle.Success),
+        new ButtonBuilder()
+            .setCustomId('kairo:stop')
+            .setEmoji('⏹️')
+            .setStyle(ButtonStyle.Danger)
     );
 
     const utilityRow = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-            .setCustomId('kairo:shuffle')
-            .setEmoji('🔀')
-            .setLabel('Shuffle')
-            .setStyle(ButtonStyle.Secondary)
-            .setDisabled(!hasQueue),
         new ButtonBuilder()
             .setCustomId('kairo:voldown')
             .setEmoji('🔉')
@@ -226,6 +211,11 @@ function buildDashboardComponents(player, options = {}) {
             .setEmoji('🔊')
             .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
+            .setCustomId('kairo:shuffle')
+            .setEmoji('🔀')
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(!hasQueue),
+        new ButtonBuilder()
             .setCustomId('kairo:autoplay')
             .setEmoji('✨')
             .setLabel('Autoplay')
@@ -233,26 +223,11 @@ function buildDashboardComponents(player, options = {}) {
         new ButtonBuilder()
             .setCustomId('kairo:queue')
             .setEmoji('📜')
-            .setLabel(`Queue (${player?.queue?.tracks?.length || 0})`)
+            .setLabel(queueCount > 0 ? `Queue (${queueCount})` : 'Queue')
             .setStyle(ButtonStyle.Secondary)
     );
 
-    const eqMenu = new StringSelectMenuBuilder()
-        .setCustomId('kairo:eq')
-        .setPlaceholder('🎛️ Select Studio EQ / Audio Preset')
-        .addOptions(
-            listPresets().map((preset) => ({
-                label: preset.label,
-                description: preset.description,
-                value: preset.id,
-                emoji: preset.emoji,
-                default: preset.id === currentPreset,
-            }))
-        );
-
-    const filterRow = new ActionRowBuilder().addComponents(eqMenu);
-
-    return [transportRow, utilityRow, filterRow];
+    return [transportRow, utilityRow];
 }
 
 function buildQueueEmbed(player, page = 1, pageSize = 10) {
@@ -291,8 +266,7 @@ function buildQueueEmbed(player, page = 1, pageSize = 10) {
         .setDescription(lines.join('\n').slice(0, 4000))
         .setFooter({
             text: `Page ${safePage}/${totalPages}  •  ${tracks.length} queued  •  Total ${formatDuration(totalMs)}`,
-        })
-        .setTimestamp();
+        });
 }
 
 function buildQueueComponents(page, totalPages) {
