@@ -43,7 +43,7 @@ module.exports = {
 
             if (!interaction.inGuild()) {
                 await safeReply(interaction, {
-                    embeds: [createStatusEmbed('warning', 'Server Only', 'Please use Sonara commands inside a Discord server.')],
+                    embeds: [createStatusEmbed('warning', 'Server Only', `Please use ${client.config.botName} commands inside a Discord server.`)],
                     flags: 64,
                 });
                 return;

@@ -6,11 +6,11 @@ const { checkVoiceAccess, hasDjAccess } = require('../utils/permissions');
 const { safeReply } = require('../utils/rest');
 
 module.exports = {
-    data: new SlashCommandBuilder().setName('leave').setDescription('Disconnect Sonara from the voice channel'),
+    data: new SlashCommandBuilder().setName('leave').setDescription('Disconnect Kairo from the voice channel'),
     async execute(interaction, client) {
         const player = client.audio.getPlayer(interaction.guildId);
         if (!player) {
-            return safeReply(interaction, { embeds: [createStatusEmbed('info', 'Not Connected', 'Sonara is not currently in a voice channel.')], flags: 64 });
+            return safeReply(interaction, { embeds: [createStatusEmbed('info', 'Not Connected', `${client.config.botName} is not currently in a voice channel.`)], flags: 64 });
         }
         const voiceCheck = checkVoiceAccess(interaction, player);
         if (!voiceCheck.ok) {

@@ -55,12 +55,12 @@ describe('dashboard UI', () => {
         };
 
         const embed = buildNowPlayingEmbed(fakePlayer, fakePlayer.queue.current, null, {
-            botName: 'Sonara',
+            botName: 'Kairo',
             twentyFourSeven: true,
             autoplay: true,
         });
         assert.ok(embed.data.description.includes('Midnight City'));
-        assert.ok(embed.data.author.name.includes('Sonara Studio'));
+        assert.ok(embed.data.author.name.includes('Kairo Studio'));
 
         const rows = buildDashboardComponents(fakePlayer, { autoplay: true });
         assert.equal(rows.length, 3);
@@ -72,10 +72,10 @@ describe('dashboard UI', () => {
         assert.ok(qEmbed.data.description.includes('Outro'));
     });
 
-    it('loads all slash commands without schema errors', () => {
+    it('loads all 36 slash commands without schema errors', () => {
         const dummy = {};
         const cmds = loadCommands(dummy, path.join(__dirname, '..', 'src', 'commands'));
-        assert.ok(cmds.length >= 25);
+        assert.equal(cmds.length, 36);
         for (const cmd of cmds) {
             assert.ok(cmd.name);
             assert.ok(cmd.description);

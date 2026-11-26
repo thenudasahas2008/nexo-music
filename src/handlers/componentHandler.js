@@ -11,11 +11,10 @@ const { safeReply, safeUpdate } = require('../utils/rest');
 
 async function handleComponentInteraction(interaction, client) {
     const id = interaction.customId || '';
-    if (!id.startsWith('sonara:')) return false;
+    if (!id.startsWith('kairo:')) return false;
 
-    // Handle search result picker: sonara:search:<sessionId>
-    if (id.startsWith('sonara:search:')) {
-        const sessionId = id.slice('sonara:search:'.length);
+    if (id.startsWith('kairo:search:')) {
+        const sessionId = id.slice('kairo:search:'.length);
         await handleSearchSelection(interaction, client, sessionId);
         return true;
     }
@@ -29,9 +28,8 @@ async function handleComponentInteraction(interaction, client) {
         return true;
     }
 
-    // Queue pagination: sonara:qpage:<page>
-    if (id.startsWith('sonara:qpage:')) {
-        const page = Number.parseInt(id.slice('sonara:qpage:'.length), 10) || 1;
+    if (id.startsWith('kairo:qpage:')) {
+        const page = Number.parseInt(id.slice('kairo:qpage:'.length), 10) || 1;
         const pageSize = 10;
         const totalPages = Math.max(1, Math.ceil((player.queue?.tracks?.length || 0) / pageSize));
         const safePage = Math.max(1, Math.min(totalPages, page));
@@ -42,8 +40,7 @@ async function handleComponentInteraction(interaction, client) {
         return true;
     }
 
-    // Queue quick-view button
-    if (id === 'sonara:queue') {
+    if (id === 'kairo:queue') {
         const pageSize = 10;
         const totalPages = Math.max(1, Math.ceil((player.queue?.tracks?.length || 0) / pageSize));
         await safeReply(interaction, {
@@ -72,7 +69,7 @@ async function handleComponentInteraction(interaction, client) {
         return true;
     }
 
-    if (id === 'sonara:eq' && interaction.isStringSelectMenu()) {
+    if (id === 'kairo:eq' && interaction.isStringSelectMenu()) {
         const presetId = interaction.values?.[0] || 'flat';
         const preset = await applyFilterPreset(player, presetId);
         client.guildStore.set(interaction.guildId, { eqPreset: preset.id });
@@ -84,7 +81,7 @@ async function handleComponentInteraction(interaction, client) {
     }
 
     switch (id) {
-        case 'sonara:toggle': {
+        case 'kairo:toggle': {
             if (player.paused) {
                 await player.resume();
             } else {
@@ -92,7 +89,7 @@ async function handleComponentInteraction(interaction, client) {
             }
             break;
         }
-        case 'sonara:skip': {
+        case 'kairo:skip': {
             if (!player.queue?.tracks?.length && !settings.autoplay) {
                 await player.stopPlaying(true, false);
                 await client.dashboard.markStopped(interaction.guildId);
@@ -105,7 +102,7 @@ async function handleComponentInteraction(interaction, client) {
             await player.skip(0, false);
             break;
         }
-        case 'sonara:prev': {
+        case 'kairo:prev': {
             const prev = player.queue?.previous?.[0];
             if (!prev) {
                 await safeReply(interaction, {
@@ -117,7 +114,7 @@ async function handleComponentInteraction(interaction, client) {
             await player.play({ clientTrack: prev });
             break;
         }
-        case 'sonara:stop': {
+        case 'kairo:stop': {
             await client.audio.stopAndLeave(interaction.guildId, { keep247: settings.twentyFourSeven });
             await safeReply(interaction, {
                 embeds: [createStatusEmbed('info', 'Playback Stopped', 'Cleared the queue and stopped the audio stream.')],
@@ -125,29 +122,29 @@ async function handleComponentInteraction(interaction, client) {
             });
             return true;
         }
-        case 'sonara:loop': {
+        case 'kairo:loop': {
             const order = ['off', 'track', 'queue'];
             const nextMode = order[(order.indexOf(player.repeatMode || 'off') + 1) % order.length];
             await player.setRepeatMode(nextMode);
             break;
         }
-        case 'sonara:shuffle': {
+        case 'kairo:shuffle': {
             if (player.queue?.tracks?.length > 1) {
                 await player.queue.shuffle();
             }
             break;
         }
-        case 'sonara:voldown': {
+        case 'kairo:voldown': {
             const nextVol = Math.max(5, (player.volume ?? 80) - 10);
             await player.setVolume(nextVol);
             break;
         }
-        case 'sonara:volup': {
+        case 'kairo:volup': {
             const nextVol = Math.min(150, (player.volume ?? 80) + 10);
             await player.setVolume(nextVol);
             break;
         }
-        case 'sonara:autoplay': {
+        case 'kairo:autoplay': {
             const nextAutoplay = !Boolean(settings.autoplay);
             client.guildStore.set(interaction.guildId, { autoplay: nextAutoplay });
             player.set('autoplay', nextAutoplay);

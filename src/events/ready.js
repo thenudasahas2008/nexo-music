@@ -33,7 +33,7 @@ module.exports = {
             const statuses = [
                 { name: `/play • ${client.config.botName} Studio`, type: ActivityType.Listening },
                 { name: `${activePlayers} live streams • ${guildCount} servers`, type: ActivityType.Watching },
-                { name: `Zero-Drop Audio • /help`, type: ActivityType.Listening },
+                { name: `Zero-Drop HD Audio • /help`, type: ActivityType.Listening },
             ];
             const choice = statuses[tick % statuses.length];
             tick += 1;

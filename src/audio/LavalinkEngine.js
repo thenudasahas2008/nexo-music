@@ -21,10 +21,12 @@ class LavalinkEngine {
 
         this.emptyChannelTimers = new Map();
         this.emptyQueueTimers = new Map();
-        this.recentHistory = new Map(); // guildId -> string[] of recent track identifiers
+        this.recentHistory = new Map(); // guildId -> Array<{ identifier, title, author, uri, duration, isStream }>
         this.trackRetries = new Map(); // guildId -> { key, count }
+        this.stallWatchdog = new Map(); // guildId -> { trackId, lastPosition, strikes }
         this.migratingGuilds = new Set();
         this._healthTimer = null;
+        this._watchdogTimer = null;
         this._initialized = false;
     }
 
@@ -86,6 +88,7 @@ class LavalinkEngine {
         });
 
         this._startHealthLoop();
+        this._startWatchdogLoop();
         log.info(`Lavalink audio engine initialized with ${initialNodes.length} active node(s)`);
     }
 
@@ -287,7 +290,7 @@ class LavalinkEngine {
     }
 
     async _queueAutoplayTrack(player, seedTrack) {
-        const history = this.recentHistory.get(player.guildId) || [];
+        const history = (this.recentHistory.get(player.guildId) || []).map((h) => h.identifier);
         const queries = [];
 
         if (seedTrack.info.sourceName?.toLowerCase().includes('youtube') && seedTrack.info.identifier) {
@@ -325,12 +328,23 @@ class LavalinkEngine {
     }
 
     _pushHistory(guildId, track) {
-        const id = track?.info?.identifier;
-        if (!id) return;
+        const info = track?.info;
+        if (!info?.identifier) return;
         const arr = this.recentHistory.get(guildId) || [];
-        arr.unshift(id);
+        arr.unshift({
+            identifier: info.identifier,
+            title: info.title || 'Unknown Track',
+            author: info.author || 'Unknown Artist',
+            uri: info.uri || null,
+            duration: Number(info.duration || 0),
+            isStream: Boolean(info.isStream),
+        });
         if (arr.length > 25) arr.length = 25;
         this.recentHistory.set(guildId, arr);
+    }
+
+    getHistory(guildId) {
+        return this.recentHistory.get(guildId) || [];
     }
 
     getPlayer(guildId) {
@@ -432,7 +446,7 @@ class LavalinkEngine {
         return { ok: false, reason: 'NO_RESULTS' };
     }
 
-    async playQuery({ guildId, voiceChannelId, textChannelId, query, requester }) {
+    async playQuery({ guildId, voiceChannelId, textChannelId, query, requester, playNext = false }) {
         return this.lock.run(guildId, async () => {
             const search = await this.searchTracks(query, requester, guildId);
             if (!search.ok) return search;
@@ -450,7 +464,11 @@ class LavalinkEngine {
             const isPlaylist = res.loadType === 'playlist';
             const tracksToAdd = isPlaylist ? res.tracks : [res.tracks[0]];
 
-            await player.queue.add(tracksToAdd);
+            if (playNext && player.playing) {
+                await player.queue.add(tracksToAdd, 0);
+            } else {
+                await player.queue.add(tracksToAdd);
+            }
             const started = !player.playing && !player.paused;
             if (started) {
                 await player.play();
@@ -461,6 +479,7 @@ class LavalinkEngine {
             return {
                 ok: true,
                 started,
+                playNext: Boolean(playNext && !started),
                 isPlaylist,
                 playlistName: res.playlist?.name || null,
                 addedCount: tracksToAdd.length,
@@ -643,8 +662,49 @@ class LavalinkEngine {
         this._healthTimer.unref?.();
     }
 
+    _startWatchdogLoop() {
+        if (this._watchdogTimer) clearInterval(this._watchdogTimer);
+        this._watchdogTimer = setInterval(() => {
+            void this.checkPlaybackWatchdog();
+        }, 8000);
+        this._watchdogTimer.unref?.();
+    }
+
+    async checkPlaybackWatchdog() {
+        if (!this.manager) return;
+        for (const player of this.manager.players.values()) {
+            const current = player.queue?.current;
+            if (!player.playing || player.paused || !current?.info || current.info.isStream) {
+                this.stallWatchdog.delete(player.guildId);
+                continue;
+            }
+            const trackId = current.info.identifier || current.info.title;
+            const pos = Number(player.position || 0);
+            const prev = this.stallWatchdog.get(player.guildId);
+
+            if (prev && prev.trackId === trackId && pos > 0 && pos === prev.lastPosition) {
+                prev.strikes += 1;
+                if (prev.strikes >= 2) {
+                    this.stallWatchdog.delete(player.guildId);
+                    log.warn('Silent audio stall detected by watchdog; recovering stream', {
+                        guildId: player.guildId,
+                        node: player.node?.id,
+                        positionMs: pos,
+                    });
+                    if (player.node?.id) {
+                        this.registry.recordFailure(player.node.id, 'STALL', 'watchdog_silent_stall');
+                    }
+                    await this._attemptTrackRecovery(player, current, pos).catch(() => false);
+                }
+            } else {
+                this.stallWatchdog.set(player.guildId, { trackId, lastPosition: pos, strikes: 0 });
+            }
+        }
+    }
+
     async shutdown() {
         if (this._healthTimer) clearInterval(this._healthTimer);
+        if (this._watchdogTimer) clearInterval(this._watchdogTimer);
         for (const t of this.emptyChannelTimers.values()) clearTimeout(t);
         for (const t of this.emptyQueueTimers.values()) clearTimeout(t);
     }

@@ -5,7 +5,7 @@ const { createStatusEmbed, formatDuration } = require('../ui/dashboard');
 const { safeReply } = require('../utils/rest');
 
 module.exports = {
-    data: new SlashCommandBuilder().setName('stats').setDescription('View Sonara uptime, memory footprint, and stream metrics'),
+    data: new SlashCommandBuilder().setName('stats').setDescription('View Kairo uptime, memory footprint, and stream metrics'),
     async execute(interaction, client) {
         const memMb = (process.memoryUsage().rss / (1024 * 1024)).toFixed(1);
         const uptime = formatDuration(client.uptime || 0);

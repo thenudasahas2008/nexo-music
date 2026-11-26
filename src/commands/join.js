@@ -6,7 +6,7 @@ const { checkVoiceAccess } = require('../utils/permissions');
 const { safeReply } = require('../utils/rest');
 
 module.exports = {
-    data: new SlashCommandBuilder().setName('join').setDescription('Connect Sonara to your current voice channel'),
+    data: new SlashCommandBuilder().setName('join').setDescription('Connect Kairo to your current voice channel'),
     async execute(interaction, client) {
         const voiceCheck = checkVoiceAccess(interaction, client.audio.getPlayer(interaction.guildId));
         if (!voiceCheck.ok) {

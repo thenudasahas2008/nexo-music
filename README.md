@@ -1,22 +1,23 @@
-# Sonara Music
+# Kairo Music
 
-Studio-grade, zero-drop Discord music bot built on **Discord.js v14** and **Lavalink v4** with multi-node automatic failover, cross-source playback recovery, and a sleek interactive Now Playing studio dashboard.
+Studio-grade, zero-drop Discord music bot built on **Discord.js v14** and **Lavalink v4** with multi-node automatic failover, active silent-stall watchdog recovery, cross-source playback fallback, and an interactive **Kairo Studio** Now Playing dashboard.
 
 ## Highlights
 
 - **Zero-Drop Multi-Node Audio Engine**
-  - Scores Lavalink v4 nodes by live RTT latency, CPU load, and audio `frameStats` (`deficit`/`nulled` frames).
+  - Scores Lavalink v4 nodes by live RTT latency, CPU load, and audio `frameStats` (`deficit` / `nulled` frames).
   - Automatically migrates active guild players to healthier nodes before frame starvation causes stutter or drops.
-  - Cross-source fallback (`ytmsearch` -> `scsearch` -> `dzsearch` -> `ytsearch`) when a source or node encounters rate limits or blocks.
-- **Interactive Studio Dashboard**
+  - **Active Anti-Stall Watchdog:** Detects silent stream freezes mid-song and recovers playback at the exact timestamp on a healthy node/source.
+  - Cross-source fallback (`ytmsearch` -> `scsearch` -> `dzsearch` -> `ytsearch`) when a source or node encounters blocks or timeouts.
+- **Kairo Studio Interactive Dashboard**
   - Live progress bar, active EQ preset indicator, node ping telemetry, Up Next preview, transport buttons, and instant EQ preset dropdown.
 - **256 MiB Container Friendly**
   - Bounded Discord gateway entity caching and sweepers, bounded Undici HTTP connection pool, and atomic JSON persistence for server settings.
-- **Full Slash Command Suite**
-  - Playback (`/play`, `/search`, `/pause`, `/resume`, `/skip`, `/back`, `/seek`, `/replay`, `/stop`)
-  - Queue (`/nowplaying`, `/queue`, `/remove`, `/move`, `/jump`, `/clear`, `/shuffle`, `/dedupe`, `/loop`, `/grab`)
-  - Audio & Modes (`/volume`, `/filter`, `/bassboost`, `/247`, `/autoplay`, `/lyrics`)
-  - Utility (`/join`, `/leave`, `/nodes`, `/settings`, `/stats`, `/help`, `/invite`)
+- **36 Slash Commands**
+  - **Playback:** `/play`, `/playnext`, `/search`, `/pause`, `/resume`, `/skip`, `/back`, `/seek`, `/replay`, `/stop`
+  - **Queue & History:** `/nowplaying`, `/queue`, `/history`, `/remove`, `/move`, `/jump`, `/clear`, `/shuffle`, `/dedupe`, `/loop`, `/grab`
+  - **Audio & DSP:** `/filter`, `/bassboost`, `/speed`, `/pitch`, `/volume`, `/247`, `/autoplay`, `/lyrics`
+  - **Utility & Diagnostics:** `/join`, `/leave`, `/nodes`, `/settings`, `/stats`, `/help`, `/invite`
 
 ## Quick Start
 

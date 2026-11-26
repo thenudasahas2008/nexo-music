@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 
 const { loadConfig } = require('../src/config/env');
 const { NodeRegistry } = require('../src/audio/NodeRegistry');
+const { LavalinkEngine } = require('../src/audio/LavalinkEngine');
 const { classifyQuery, buildFallbackQueries } = require('../src/audio/queryGuard');
 const { getPreset, listPresets, applyFilterPreset } = require('../src/audio/filters');
 
@@ -102,5 +103,33 @@ describe('filters', () => {
         assert.ok(calls.includes('nightcore'));
         await applyFilterPreset(mockPlayer, '8d');
         assert.ok(calls.includes('rotation'));
+    });
+});
+
+describe('LavalinkEngine anti-stall watchdog', () => {
+    it('triggers stream recovery after consecutive frozen position checks', async () => {
+        const cfg = loadConfig({});
+        const engine = new LavalinkEngine({}, cfg, { get: () => ({}) });
+        let recoveredAt = null;
+        engine._attemptTrackRecovery = async (_player, _track, pos) => {
+            recoveredAt = pos;
+            return true;
+        };
+        const fakePlayer = {
+            guildId: 'g-1',
+            playing: true,
+            paused: false,
+            position: 42000,
+            node: { id: 'node-a' },
+            queue: { current: { info: { identifier: 'id-1', title: 'Test', isStream: false } } },
+        };
+        engine.manager = { players: new Map([['g-1', fakePlayer]]) };
+
+        await engine.checkPlaybackWatchdog();
+        assert.equal(recoveredAt, null);
+        await engine.checkPlaybackWatchdog();
+        assert.equal(recoveredAt, null);
+        await engine.checkPlaybackWatchdog();
+        assert.equal(recoveredAt, 42000);
     });
 });

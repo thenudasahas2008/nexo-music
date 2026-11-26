@@ -1,7 +1,7 @@
 {
-  "name": "sonara-music",
-  "version": "1.0.0",
-  "description": "Sonara — Studio-grade, zero-drop Discord music bot powered by multi-node Lavalink v4",
+  "name": "kairo-music",
+  "version": "1.1.0",
+  "description": "Kairo — Studio-grade, zero-drop Discord music bot powered by multi-node Lavalink v4",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",

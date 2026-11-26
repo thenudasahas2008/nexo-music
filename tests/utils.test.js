@@ -113,7 +113,7 @@ describe('rest & logger', () => {
 
     it('loads config defaults safely', () => {
         const cfg = loadConfig({});
-        assert.equal(cfg.botName, 'Sonara');
+        assert.equal(cfg.botName, 'Kairo');
         assert.equal(cfg.lavalink.publicNodeEnabled, true);
         assert.equal(cfg.playback.defaultVolume, 80);
     });

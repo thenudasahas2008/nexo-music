@@ -7,7 +7,7 @@ const { safeReply } = require('../utils/rest');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('settings')
-        .setDescription('Configure Sonara server defaults (Admin / Manage Server)')
+        .setDescription('Configure Kairo server defaults (Admin / Manage Server)')
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
         .addIntegerOption((opt) => opt.setName('default_volume').setDescription('Default server volume (1-150)').setMinValue(1).setMaxValue(150))
         .addRoleOption((opt) => opt.setName('dj_role').setDescription('Role allowed to control playback'))

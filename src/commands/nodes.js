@@ -26,7 +26,7 @@ module.exports = {
         });
 
         return safeReply(interaction, {
-            embeds: [createStatusEmbed('info', 'Sonara Audio Node Pool', `Active multi-node failover pool (${nodes.filter((n) => n.connected).length}/${nodes.length} online).`, fields)],
+            embeds: [createStatusEmbed('info', `${client.config.botName} Audio Node Pool`, `Active multi-node failover pool (${nodes.filter((n) => n.connected).length}/${nodes.length} online).`, fields)],
         });
     },
 };

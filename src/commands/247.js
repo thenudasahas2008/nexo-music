@@ -39,8 +39,8 @@ module.exports = {
                     'success',
                     `24/7 Mode ${next ? 'Enabled' : 'Disabled'}`,
                     next
-                        ? `Sonara will stay connected to <#${voiceCheck.voiceChannel.id}> and automatically recover if disconnected.`
-                        : 'Sonara will now leave automatically when the voice channel or queue becomes idle.'
+                        ? `${client.config.botName} will stay connected to <#${voiceCheck.voiceChannel.id}> and automatically recover if disconnected.`
+                        : `${client.config.botName} will now leave automatically when the voice channel or queue becomes idle.`
                 ),
             ],
         });

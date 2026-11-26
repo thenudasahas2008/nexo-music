@@ -5,7 +5,7 @@ const { createStatusEmbed } = require('../ui/dashboard');
 const { safeReply } = require('../utils/rest');
 
 module.exports = {
-    data: new SlashCommandBuilder().setName('nowplaying').setDescription('Show the interactive Sonara studio dashboard'),
+    data: new SlashCommandBuilder().setName('nowplaying').setDescription('Show the interactive Kairo studio dashboard'),
     async execute(interaction, client) {
         const player = client.audio.getPlayer(interaction.guildId);
         if (!player?.queue?.current) {

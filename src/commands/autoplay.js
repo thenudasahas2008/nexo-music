@@ -28,7 +28,7 @@ module.exports = {
                 createStatusEmbed(
                     'success',
                     `Autoplay ${next ? 'Enabled' : 'Disabled'}`,
-                    next ? 'Sonara will automatically queue similar tracks when your queue ends.' : 'Playback will stop normally after the last track.'
+                    next ? `${client.config.botName} will automatically queue similar tracks when your queue ends.` : 'Playback will stop normally after the last track.'
                 ),
             ],
         });

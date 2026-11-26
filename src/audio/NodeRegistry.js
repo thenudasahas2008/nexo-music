@@ -76,7 +76,7 @@ class NodeRegistry {
         try {
             const res = await fetch(PUBLIC_NODE_LIST_URL, {
                 signal: controller.signal,
-                headers: { Accept: 'application/json', 'User-Agent': 'SonaraMusic/1.0' },
+                headers: { Accept: 'application/json', 'User-Agent': 'KairoMusic/1.1' },
             });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const text = await readResponseTextWithLimit(res, MAX_FETCH_BYTES);
@@ -157,7 +157,7 @@ class NodeRegistry {
         try {
             const res = await fetch(url, {
                 signal: controller.signal,
-                headers: { Authorization: authorization, 'User-Agent': 'SonaraMusic/1.0' },
+                headers: { Authorization: authorization, 'User-Agent': 'KairoMusic/1.1' },
             });
             if (!res.ok) return null;
             const body = await readResponseTextWithLimit(res, 65536);

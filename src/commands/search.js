@@ -50,7 +50,7 @@ module.exports = {
         });
 
         const menu = new StringSelectMenuBuilder()
-            .setCustomId(`sonara:search:${sessionId}`)
+            .setCustomId(`kairo:search:${sessionId}`)
             .setPlaceholder('Choose a track to play...')
             .addOptions(
                 tracks.map((t, idx) => ({

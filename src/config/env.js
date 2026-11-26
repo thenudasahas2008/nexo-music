@@ -31,7 +31,7 @@ function loadConfig(env = process.env) {
     const hasPrivateNode = Boolean(lavalinkHost && lavalinkPassword);
 
     return Object.freeze({
-        botName: String(env.BOT_NAME || 'Sonara').trim() || 'Sonara',
+        botName: String(env.BOT_NAME || 'Kairo').trim() || 'Kairo',
         token,
         defaultLanguage: String(env.DEFAULT_LANGUAGE || 'en').trim() || 'en',
         logLevel: String(env.LOG_LEVEL || 'info').trim().toLowerCase(),

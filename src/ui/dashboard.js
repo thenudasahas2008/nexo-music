@@ -93,7 +93,7 @@ function buildNowPlayingEmbed(player, track, client, options = {}) {
         return new EmbedBuilder()
             .setColor(COLORS.IDLE)
             .setAuthor({
-                name: `${options.botName || 'Sonara'} Studio  •  Session Ended`,
+                name: `${options.botName || 'Kairo'} Studio  •  Session Ended`,
                 iconURL: client?.user?.displayAvatarURL?.() || undefined,
             })
             .setDescription('Queue finished. Use `/play` anytime to start a new listening session.');
@@ -131,15 +131,15 @@ function buildNowPlayingEmbed(player, track, client, options = {}) {
     const requesterDisplay = requesterId ? `<@${requesterId}>` : 'Autoplay';
 
     const statusBadge = isPaused ? 'PAUSED' : isStream ? 'LIVE STREAM' : 'NOW PLAYING';
-    const footerParts = ['Sonara Audio Engine'];
+    const footerParts = [`${options.botName || 'Kairo'} Zero-Drop Audio`];
     if (is247) footerParts.push('24/7 On');
     if (isAutoplay) footerParts.push('Autoplay On');
     if (player.node?.id) footerParts.push(`Node ${player.node.id.slice(0, 22)}`);
 
     const embed = new EmbedBuilder()
-        .setColor(isPaused ? COLORS.PAUSED : COLORS.PLAYING)
+        .setColor(isPaused ? COLORS.PAUSED : isStream ? 0xf43f5e : COLORS.PLAYING)
         .setAuthor({
-            name: `${options.botName || 'Sonara'} Studio  •  ${statusBadge}`,
+            name: `${options.botName || 'Kairo'} Studio  •  ${statusBadge}`,
             iconURL: client?.user?.displayAvatarURL?.() || undefined,
         })
         .setDescription(`${titleLine}\nby **${artistText}**  •  \`${sourceBadge}\`\n\n${progress}`)
@@ -151,7 +151,7 @@ function buildNowPlayingEmbed(player, track, client, options = {}) {
             },
             {
                 name: '⚡ Engine',
-                value: `Ping: \`${latencyLabel}\`\nMode: \`${is247 ? '24/7 Locked' : 'Standard'}\``,
+                value: `Ping: \`${latencyLabel}\`\nMode: \`${is247 ? '24/7 Locked' : 'HD Relay'}\``,
                 inline: true,
             },
             {
@@ -185,26 +185,26 @@ function buildDashboardComponents(player, options = {}) {
 
     const transportRow = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-            .setCustomId('sonara:prev')
+            .setCustomId('kairo:prev')
             .setEmoji('⏮️')
             .setStyle(ButtonStyle.Secondary)
             .setDisabled(!hasPrev),
         new ButtonBuilder()
-            .setCustomId('sonara:toggle')
+            .setCustomId('kairo:toggle')
             .setEmoji(isPaused ? '▶️' : '⏸️')
             .setLabel(isPaused ? 'Resume' : 'Pause')
             .setStyle(isPaused ? ButtonStyle.Success : ButtonStyle.Primary),
         new ButtonBuilder()
-            .setCustomId('sonara:skip')
+            .setCustomId('kairo:skip')
             .setEmoji('⏭️')
             .setLabel('Skip')
             .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
-            .setCustomId('sonara:stop')
+            .setCustomId('kairo:stop')
             .setEmoji('⏹️')
             .setStyle(ButtonStyle.Danger),
         new ButtonBuilder()
-            .setCustomId('sonara:loop')
+            .setCustomId('kairo:loop')
             .setEmoji('🔁')
             .setLabel(repeatMode === 'off' ? 'Loop' : repeatMode === 'track' ? 'Track' : 'Queue')
             .setStyle(repeatMode === 'off' ? ButtonStyle.Secondary : ButtonStyle.Success)
@@ -212,33 +212,33 @@ function buildDashboardComponents(player, options = {}) {
 
     const utilityRow = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-            .setCustomId('sonara:shuffle')
+            .setCustomId('kairo:shuffle')
             .setEmoji('🔀')
             .setLabel('Shuffle')
             .setStyle(ButtonStyle.Secondary)
             .setDisabled(!hasQueue),
         new ButtonBuilder()
-            .setCustomId('sonara:voldown')
+            .setCustomId('kairo:voldown')
             .setEmoji('🔉')
             .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
-            .setCustomId('sonara:volup')
+            .setCustomId('kairo:volup')
             .setEmoji('🔊')
             .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
-            .setCustomId('sonara:autoplay')
+            .setCustomId('kairo:autoplay')
             .setEmoji('✨')
             .setLabel('Autoplay')
             .setStyle(isAutoplay ? ButtonStyle.Success : ButtonStyle.Secondary),
         new ButtonBuilder()
-            .setCustomId('sonara:queue')
+            .setCustomId('kairo:queue')
             .setEmoji('📜')
             .setLabel(`Queue (${player?.queue?.tracks?.length || 0})`)
             .setStyle(ButtonStyle.Secondary)
     );
 
     const eqMenu = new StringSelectMenuBuilder()
-        .setCustomId('sonara:eq')
+        .setCustomId('kairo:eq')
         .setPlaceholder('🎛️ Select Studio EQ / Audio Preset')
         .addOptions(
             listPresets().map((preset) => ({
@@ -287,7 +287,7 @@ function buildQueueEmbed(player, page = 1, pageSize = 10) {
 
     return new EmbedBuilder()
         .setColor(COLORS.PLAYING)
-        .setTitle('📜  Sonara Playback Queue')
+        .setTitle('📜  Kairo Playback Queue')
         .setDescription(lines.join('\n').slice(0, 4000))
         .setFooter({
             text: `Page ${safePage}/${totalPages}  •  ${tracks.length} queued  •  Total ${formatDuration(totalMs)}`,
@@ -299,13 +299,13 @@ function buildQueueComponents(page, totalPages) {
     return [
         new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setCustomId(`sonara:qpage:${Math.max(1, page - 1)}`)
+                .setCustomId(`kairo:qpage:${Math.max(1, page - 1)}`)
                 .setEmoji('◀️')
                 .setLabel('Previous')
                 .setStyle(ButtonStyle.Secondary)
                 .setDisabled(page <= 1),
             new ButtonBuilder()
-                .setCustomId(`sonara:qpage:${Math.min(totalPages, page + 1)}`)
+                .setCustomId(`kairo:qpage:${Math.min(totalPages, page + 1)}`)
                 .setEmoji('▶️')
                 .setLabel('Next')
                 .setStyle(ButtonStyle.Secondary)
