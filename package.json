@@ -1,0 +1,24 @@
+{
+  "name": "sonara-music",
+  "version": "1.0.0",
+  "description": "Sonara — Studio-grade, zero-drop Discord music bot powered by multi-node Lavalink v4",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "deploy": "node src/handlers/deployCommands.js",
+    "test": "node --test tests/*.test.js",
+    "check": "node --check src/index.js"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.27.0",
+    "dotenv": "^17.4.2",
+    "lavalink-client": "^2.11.0",
+    "picocolors": "^1.1.1",
+    "undici": "^6.27.0"
+  }
+}

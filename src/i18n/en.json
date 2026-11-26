@@ -1,0 +1,14 @@
+{
+  "errors": {
+    "notInVoice": "Join a voice channel first to control audio.",
+    "differentVoiceChannel": "I'm currently active in <#{channelId}>. Join that channel to listen or control playback.",
+    "missingConnectPerm": "I don't have permission to connect to your voice channel.",
+    "missingSpeakPerm": "I don't have permission to speak in your voice channel.",
+    "noDjPerm": "DJ permissions or being alone in the voice channel are required for this action.",
+    "noPlayer": "Nothing is playing right now.",
+    "noNodes": "All audio nodes are temporarily busy or reconnecting. Please try again in a few seconds.",
+    "invalidQuery": "Please enter a valid song name or supported URL.",
+    "noResults": "No playable tracks matched that query across available audio sources.",
+    "commandTimeout": "That request took too long to respond. Please try again."
+  }
+}
