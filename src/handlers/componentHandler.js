@@ -140,7 +140,7 @@ async function handleComponentInteraction(interaction, client) {
             break;
         }
         case 'kairo:volup': {
-            const nextVol = Math.min(150, (player.volume ?? 80) + 10);
+            const nextVol = Math.min(100, (player.volume ?? 80) + 10);
             await player.setVolume(nextVol);
             break;
         }

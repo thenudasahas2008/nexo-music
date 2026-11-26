@@ -25,16 +25,16 @@ const FILTER_PRESETS = Object.freeze({
         apply: async (player) => {
             await clearAllFilters(player);
             await player.filterManager.setEQ([
-                { band: 0, gain: 0.2 },
-                { band: 1, gain: 0.16 },
-                { band: 2, gain: 0.12 },
-                { band: 3, gain: 0.06 },
-                { band: 4, gain: 0.0 },
+                { band: 0, gain: 0.13 },
+                { band: 1, gain: 0.1 },
+                { band: 2, gain: 0.07 },
+                { band: 3, gain: 0.03 },
+                { band: 4, gain: -0.02 },
                 { band: 5, gain: -0.03 },
                 { band: 6, gain: -0.02 },
                 { band: 7, gain: 0.0 },
-                { band: 8, gain: 0.03 },
-                { band: 9, gain: 0.04 },
+                { band: 8, gain: 0.02 },
+                { band: 9, gain: 0.02 },
             ]);
         },
     },

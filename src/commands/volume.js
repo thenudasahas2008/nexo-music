@@ -8,9 +8,9 @@ const { safeReply } = require('../utils/rest');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('volume')
-        .setDescription('Adjust playback volume (1 - 150%)')
+        .setDescription('Adjust playback volume (1 - 100%)')
         .addIntegerOption((opt) =>
-            opt.setName('level').setDescription('Volume percentage').setRequired(true).setMinValue(1).setMaxValue(150)
+            opt.setName('level').setDescription('Volume percentage (clean non-clipping range)').setRequired(true).setMinValue(1).setMaxValue(100)
         ),
     async execute(interaction, client) {
         const player = client.audio.getPlayer(interaction.guildId);

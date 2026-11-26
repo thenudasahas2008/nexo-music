@@ -9,7 +9,7 @@ module.exports = {
         .setName('settings')
         .setDescription('Configure Kairo server defaults (Admin / Manage Server)')
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
-        .addIntegerOption((opt) => opt.setName('default_volume').setDescription('Default server volume (1-150)').setMinValue(1).setMaxValue(150))
+        .addIntegerOption((opt) => opt.setName('default_volume').setDescription('Default server volume (1-100)').setMinValue(1).setMaxValue(100))
         .addRoleOption((opt) => opt.setName('dj_role').setDescription('Role allowed to control playback'))
         .addBooleanOption((opt) => opt.setName('clear_dj_role').setDescription('Allow everyone in voice channel to control playback')),
     async execute(interaction, client) {

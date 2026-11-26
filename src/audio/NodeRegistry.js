@@ -8,7 +8,7 @@ const log = createLogger('NodeRegistry');
 const PUBLIC_NODE_LIST_URL = 'https://lavalink-list.ajieblogs.eu.org/All';
 const MAX_FETCH_BYTES = 262144;
 const FETCH_TIMEOUT_MS = 12000;
-const PROBE_TIMEOUT_MS = 4500;
+const PROBE_TIMEOUT_MS = 4000;
 const REFRESH_INTERVAL_MS = 10 * 60 * 1000;
 const MAX_CONSECUTIVE_FAILS = 8;
 
@@ -97,35 +97,46 @@ class NodeRegistry {
             const port = Number(item.port);
             const password = String(item.password || '').trim();
             if (!host || !password || !Number.isInteger(port) || port < 1 || port > 65535) return false;
-            // Only accept Lavalink v4 nodes (version starts with 'v4' or '4' or unspecified modern v4)
             const ver = String(item.version || '').toLowerCase();
             if (ver && !ver.startsWith('v4') && !ver.startsWith('4')) return false;
             return isSafePublicHost(host, allowlist);
         });
 
-        // Probe candidates concurrently in bounded batches for /v4/info latency & sourceManagers
-        const probed = await this._probeBatch(filtered.slice(0, 24));
-        const nextMap = new Map();
+        const probed = await this._probeBatch(filtered.slice(0, 32));
+        const dedupedByHost = new Map();
+
         for (const node of probed) {
-            nextMap.set(node.id, node);
             if (!this.health.has(node.id)) {
                 this.health.set(node.id, this._createInitialHealth(node.probeLatencyMs));
-            } else {
-                const h = this.health.get(node.id);
-                h.latencyMs = node.probeLatencyMs;
             }
+            const h = this.health.get(node.id);
+            h.latencyMs = node.probeLatencyMs;
+            if (node.initialStats) {
+                this.updateStats(node.id, node.initialStats);
+            }
+
+            const hostKey = node.host.toLowerCase();
+            const existing = dedupedByHost.get(hostKey);
+            if (!existing || this.scoreNode(node.id, node) > this.scoreNode(existing.id, existing)) {
+                dedupedByHost.set(hostKey, node);
+            }
+        }
+
+        const nextMap = new Map();
+        for (const node of dedupedByHost.values()) {
+            nextMap.set(node.id, node);
         }
 
         if (nextMap.size > 0) {
             this.candidates = nextMap;
             this._lastRefreshAt = Date.now();
-            log.info(`Discovered ${nextMap.size} validated public Lavalink v4 nodes`);
+            log.info(`Discovered ${nextMap.size} unique healthy public Lavalink v4 hosts`);
         }
 
         return this.listCandidateOptions();
     }
 
-    async _probeBatch(items, concurrency = 6) {
+    async _probeBatch(items, concurrency = 8) {
         const results = [];
         let cursor = 0;
 
@@ -147,7 +158,7 @@ class NodeRegistry {
         const secure = Boolean(item.secure);
         const authorization = String(item.password).trim();
         const proto = secure ? 'https' : 'http';
-        const url = `${proto}://${host}:${port}/v4/info`;
+        const base = `${proto}://${host}:${port}`;
 
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
@@ -155,14 +166,26 @@ class NodeRegistry {
 
         const started = Date.now();
         try {
-            const res = await fetch(url, {
-                signal: controller.signal,
-                headers: { Authorization: authorization, 'User-Agent': 'KairoMusic/1.1' },
-            });
-            if (!res.ok) return null;
-            const body = await readResponseTextWithLimit(res, 65536);
-            const info = JSON.parse(body);
+            const headers = { Authorization: authorization, 'User-Agent': 'KairoMusic/1.1' };
+            const [infoRes, statsRes] = await Promise.all([
+                fetch(`${base}/v4/info`, { signal: controller.signal, headers }),
+                fetch(`${base}/v4/stats`, { signal: controller.signal, headers }).catch(() => null),
+            ]);
+            if (!infoRes.ok) return null;
+
+            const infoBody = await readResponseTextWithLimit(infoRes, 65536);
+            const info = JSON.parse(infoBody);
             if (!info?.version) return null;
+
+            let initialStats = null;
+            if (statsRes?.ok) {
+                try {
+                    const statsBody = await readResponseTextWithLimit(statsRes, 32768);
+                    initialStats = JSON.parse(statsBody);
+                } catch {
+                    initialStats = null;
+                }
+            }
 
             const latencyMs = Date.now() - started;
             const sources = Array.isArray(info.sourceManagers)
@@ -177,6 +200,7 @@ class NodeRegistry {
                 authorization,
                 secure,
                 probeLatencyMs: latencyMs,
+                initialStats,
                 sourceManagers: sources,
                 hasYoutube: sources.includes('youtube'),
                 hasSoundCloud: sources.includes('soundcloud'),
@@ -261,31 +285,40 @@ class NodeRegistry {
     }
 
     /**
-     * Higher score = healthier, lower-latency, stutter-free node.
+     * Higher score = healthier, low-player, low-latency, stutter-free node.
      */
     scoreNode(nodeId, meta = {}) {
         const h = this.getHealth(nodeId);
         const now = Date.now();
-        let score = 1000;
+        let score = 1200;
 
-        if (meta.isPrivate) score += 600;
-        if (meta.secure) score += 80;
-        if (meta.hasYoutube) score += 60;
-        if (meta.hasSoundCloud) score += 25;
+        if (meta.isPrivate) score += 800;
+        if (meta.secure) score += 60;
+        if (meta.hasYoutube) score += 50;
+        if (meta.hasSoundCloud) score += 20;
 
-        // Penalize latency (1ms = 0.5pt)
-        score -= Math.min(350, (h.latencyMs || 150) * 0.5);
+        // Penalize latency (1ms = 0.45pt, up to 450pt)
+        score -= Math.min(450, (h.latencyMs || 150) * 0.45);
 
-        // Penalize high CPU load (load >= 0.85 is stutter territory)
-        if (h.cpuLoad > 0.85) score -= 500;
-        else if (h.cpuLoad > 0.6) score -= 220;
-        else score -= h.cpuLoad * 120;
+        // Heavily penalize congested public nodes with dozens/hundreds of concurrent players
+        if (!meta.isPrivate && h.playingPlayers > 0) {
+            if (h.playingPlayers > 150) score -= 550;
+            else if (h.playingPlayers > 50) score -= 260;
+            else score -= h.playingPlayers * 3;
+        }
 
-        // Penalize audio frame drops/nulled frames heavily
-        score -= Math.min(450, h.frameDeficit * 8 + h.frameNulled * 12);
+        // Penalize CPU saturation (stutter/choppy audio territory)
+        if (h.cpuLoad > 0.85) score -= 650;
+        else if (h.cpuLoad > 0.6) score -= 280;
+        else score -= h.cpuLoad * 150;
+
+        // Penalize ANY audio frame drops/nulled frames heavily
+        if (h.frameNulled > 0 || h.frameDeficit > 2) {
+            score -= Math.min(650, 180 + h.frameDeficit * 15 + h.frameNulled * 25);
+        }
 
         // Penalize recent failures & stalls
-        score -= h.failCount * 90 + h.stallCount * 110;
+        score -= h.failCount * 100 + h.stallCount * 130;
         if (h.cooldownUntil > now) score -= 1200;
 
         // Reward proven playback stability

@@ -64,7 +64,7 @@ describe('NodeRegistry scoring', () => {
         assert.ok(s1 > s2);
     });
 
-    it('prioritizes private node above public nodes', () => {
+    it('prioritizes private node above public nodes and penalizes congested player counts', () => {
         const cfg = loadConfig({
             LAVALINK_HOST: 'lava.myserver.com',
             LAVALINK_PORT: '2333',
@@ -74,6 +74,12 @@ describe('NodeRegistry scoring', () => {
         const priv = reg.getPrivateNodeOption();
         assert.ok(priv);
         assert.ok(reg.scoreNode(priv.id, priv) > reg.scoreNode('pub-1', { secure: true }));
+
+        reg.updateLatency('idle-node', 150);
+        reg.updateStats('idle-node', { cpu: { systemLoad: 0.1 }, playingPlayers: 3, frameStats: { deficit: 0, nulled: 0 } });
+        reg.updateLatency('crowded-node', 150);
+        reg.updateStats('crowded-node', { cpu: { systemLoad: 0.1 }, playingPlayers: 853, frameStats: { deficit: 0, nulled: 0 } });
+        assert.ok(reg.scoreNode('idle-node', { secure: true }) > reg.scoreNode('crowded-node', { secure: true }));
     });
 });
 

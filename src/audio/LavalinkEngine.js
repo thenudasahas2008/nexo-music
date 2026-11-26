@@ -58,7 +58,7 @@ class LavalinkEngine {
             playerOptions: {
                 clientBasedPositionUpdateInterval: 500,
                 defaultSearchPlatform: this.config.playback.defaultSearchPlatform,
-                volumeDecrementer: 1.0,
+                volumeDecrementer: 0.8, // Clean headroom to prevent harsh digital clipping
                 onDisconnect: {
                     autoReconnect: false,
                     destroyPlayer: false,
@@ -133,12 +133,12 @@ class LavalinkEngine {
         nm.on('raw', (node, payload) => {
             if (payload?.op === 'stats') {
                 this.registry.updateStats(node.id, payload);
-                // Proactive stutter prevention: migrate active streams if frame drops or severe CPU saturation occur
+                // Proactive stutter prevention: migrate active streams if frame drops or high CPU saturation occur
                 const deficit = Number(payload.frameStats?.deficit ?? 0);
                 const nulled = Number(payload.frameStats?.nulled ?? 0);
                 const load = Math.max(Number(payload.cpu?.systemLoad ?? 0), Number(payload.cpu?.lavalinkLoad ?? 0));
-                if (deficit > 20 || nulled > 12 || load > 0.92) {
-                    this.registry.recordFailure(node.id, 'STALL', `load=${load.toFixed(2)},nulled=${nulled}`);
+                if (deficit > 5 || nulled > 2 || load > 0.82) {
+                    this.registry.recordFailure(node.id, 'STALL', `load=${load.toFixed(2)},deficit=${deficit},nulled=${nulled}`);
                     void this._migratePlayersFromNode(node.id, 'frame_saturation');
                 }
             }
@@ -152,6 +152,12 @@ class LavalinkEngine {
                 this.registry.recordSuccess(player.node.id);
             }
             this._pushHistory(player.guildId, track);
+            log.info('Track started', {
+                guildId: player.guildId,
+                node: player.node?.id || 'unknown',
+                source: track?.info?.sourceName || 'unknown',
+                title: track?.info?.title || 'unknown',
+            });
 
             const settings = this.guildStore.get(player.guildId);
             if (settings.eqPreset && settings.eqPreset !== 'flat' && !player.get('eqApplied')) {
@@ -668,6 +674,49 @@ class LavalinkEngine {
             void this.checkPlaybackWatchdog();
         }, 8000);
         this._watchdogTimer.unref?.();
+
+        if (this._statsPollTimer) clearInterval(this._statsPollTimer);
+        this._statsPollTimer = setInterval(() => {
+            void this._pollActiveNodesStats();
+        }, 12000);
+        this._statsPollTimer.unref?.();
+    }
+
+    async _pollActiveNodesStats() {
+        if (!this.manager || this.manager.players.size === 0) return;
+        const activeNodes = new Map();
+        for (const player of this.manager.players.values()) {
+            if (player.playing && !player.paused && player.node?.connected) {
+                activeNodes.set(player.node.id, player.node);
+            }
+        }
+        for (const [nodeId, node] of activeNodes.entries()) {
+            const t0 = Date.now();
+            try {
+                const stats = await node.request('/v4/stats');
+                const rtt = Date.now() - t0;
+                this.registry.updateLatency(nodeId, rtt);
+                if (stats) {
+                    this.registry.updateStats(nodeId, stats);
+                    const deficit = Number(stats.frameStats?.deficit ?? 0);
+                    const nulled = Number(stats.frameStats?.nulled ?? 0);
+                    const load = Math.max(Number(stats.cpu?.systemLoad ?? 0), Number(stats.cpu?.lavalinkLoad ?? 0));
+                    if (deficit > 5 || nulled > 2 || load > 0.82) {
+                        log.warn('Active poll detected audio degradation, migrating players', {
+                            nodeId,
+                            rtt,
+                            load: load.toFixed(2),
+                            deficit,
+                            nulled,
+                        });
+                        this.registry.recordFailure(nodeId, 'STALL', `poll_degraded(d=${deficit},n=${nulled})`);
+                        await this._migratePlayersFromNode(nodeId, 'active_poll_degradation');
+                    }
+                }
+            } catch {
+                // Ignore transient poll errors
+            }
+        }
     }
 
     async checkPlaybackWatchdog() {
@@ -705,6 +754,7 @@ class LavalinkEngine {
     async shutdown() {
         if (this._healthTimer) clearInterval(this._healthTimer);
         if (this._watchdogTimer) clearInterval(this._watchdogTimer);
+        if (this._statsPollTimer) clearInterval(this._statsPollTimer);
         for (const t of this.emptyChannelTimers.values()) clearTimeout(t);
         for (const t of this.emptyQueueTimers.values()) clearTimeout(t);
     }
